@@ -113,6 +113,7 @@ void DisplayList(stack* head) {
 	printf("\n");
 }
 //处理缓冲区中的字符
+//支持以除了运算符、小括号、数字以外的任意字符作为开始和结束符
 elemType process(char ch, char startSign, char endSign) {
 	stack* numStack = NULL, * opeStack = NULL;
 
@@ -121,8 +122,8 @@ elemType process(char ch, char startSign, char endSign) {
 	int sign = 1;	//默认将+ -理解为操作符
 
 	while (1) {
-		if (ch == ')')
-			ch = '#';
+		if (ch == ')')	//一律将右括号处理为结束符
+			ch = endSign;
 		if ((isOperator(ch) && sign) || ch == startSign || ch == endSign) {
 			int icp = getIcp(ch);	//获取栈外运算符优先级
 			//获取栈内运算符优先级，若为空则将isp设为-1
@@ -133,19 +134,24 @@ elemType process(char ch, char startSign, char endSign) {
 				push(&opeStack, ch);
 			}
 			else {
-				do {	//先无条件执行一次运算操作，若后面运算符优先级还是小于等于前面，则再运算
+				if (ch == endSign && getTop(opeStack) == startSign) {
+					pop(&opeStack);	//清空运算符栈
+					return pop(&numStack);	//返回运算结果
+				}
+				do {
 					push(&numStack, calculate(pop(&numStack), pop(&numStack), pop(&opeStack)));
 					if (ch == endSign && getTop(opeStack) == startSign) {
 						pop(&opeStack);	//清空运算符栈
 						return pop(&numStack);	//返回运算结果
 					}
 					isp = getIsp(getTop(opeStack));	//重新获取当前栈内运算符优先级
-				} while (icp < isp);
+				} while (icp < isp);	//一直运算，直到栈外运算符优先级大于栈内元素优先级
+				push(&opeStack, ch);	//直到栈外运算符优先级大于站内运算符后，才让入栈
 			}
 			ch = getchar();
 			sign = 0;
 		}
-		else {	//如果不是运算符，也不是开始、结束符
+		else {	//如果是数字、+、-、小括号
 			int num = 0;	//后面一坨的值
 			int numSign = 1;	//后面一坨运算符的符号，默认为正
 			while ((isOperator(ch) && !sign) || ch == '(') {
@@ -158,6 +164,7 @@ elemType process(char ch, char startSign, char endSign) {
 					break;
 				case '(':
 					num = process('#', '#', '#');
+					sign = 1;
 					break;
 				}
 				ch = getchar();
@@ -174,10 +181,11 @@ elemType process(char ch, char startSign, char endSign) {
 
 //主函数
 int main() {
-	printf("Please input your infix expression\n");
-	printf("Your expressin must start and end with #\n");
+	printf("Infix Calculater\n---------------\n");
+	printf("Your expressin must start and end with #.\n");
+	printf("Please input your infix expression:\n");
 	
 	//之所以将处理缓冲区的功能封装起来，是因为需要递归调用
 	//传入空的头字符，以#作为开始和结束标志
-	printf("=%d", process(' ', '#', '#'));
+	printf("The result is: %d\n", process(' ', '#', '#'));
 }
