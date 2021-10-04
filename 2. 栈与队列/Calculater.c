@@ -52,11 +52,8 @@ int isOperator(char ope) {
 	case '-':
 	case '*':
 	case '/':
-	case '(':
-	case ')':
-	case '#':
 		return 1;
-	default: 
+	default:
 		return 0;
 	}
 }
@@ -71,12 +68,8 @@ int getIsp(char ope) {
 	case '+':
 	case '-':
 		return 2;
-	case '(':
-		return 1;
-	case '#':
-		return 0;
 	default:
-		return -1;
+		return 0;
 	}
 }
 //获取栈外运算符优先级
@@ -92,10 +85,8 @@ int getIcp(char ope) {
 		return 2;
 	case '(':
 		return 4;
-	case '#':
-		return 0;
 	default:
-		return -1;
+		return 0;
 	}
 }
 //进行计算，并返回结果
@@ -113,71 +104,80 @@ elemType calculate(elemType a, elemType b, char ch) {
 		return 0;
 	}
 }
-//主函数
-int main() {
+void DisplayList(stack* head) {
+	head = head->next;	//先将指针移动到头结点的下一个结点
+	while (head != NULL) {
+		printf("%d ", head->data);
+		head = head->next;
+	}
+	printf("\n");
+}
+//处理缓冲区中的字符
+elemType process(char ch, char startSign, char endSign) {
 	stack* numStack = NULL, * opeStack = NULL;
-	char ch;
-	elemType result = 0;
 
-	printf("Please input your infix expression\n");
-	printf("Your expressin must start and end with #\n");
-	ch = getchar();
-	int sign = 1;//用于判断即将读入的'+'、'-'是加减号还是正负号
-	/*判断'+'、'-'是加减号还是正负号的方法是：
-	先默认它是加减号
-	之后每次往运算符栈加入一个符号后，就将sign设为0
-	sign为0时，'+'、'-'它被认为是正负号
-	之后每次往运算数栈加入一个数字后，就将sign设为1
-	sign为1时，'+'、'-'它被认为是加减号*
-	而特殊情况是，小括号前后是可以跟正负号的
-	因此，加入了(sign || ch == '(' || ch == ')')条件*/
+	if (ch == ' ')
+		ch = getchar();	//如果没有传入初始ch值，则从缓存区读一个
+	int sign = 1;	//默认将+ -理解为操作符
+
 	while (1) {
-		if (isOperator(ch) && (sign || ch == '(' || ch == ')')) {
-			int icp = getIcp(ch);
-			int isp = getIsp(getTop(opeStack));
+		if (ch == ')')
+			ch = '#';
+		if ((isOperator(ch) && sign) || ch == startSign || ch == endSign) {
+			int icp = getIcp(ch);	//获取栈外运算符优先级
+			//获取栈内运算符优先级，若为空则将isp设为-1
+			int isp = getTop(opeStack) == -1 ? -1 : getIsp(getTop(opeStack));
 
+			//如果icp>isp则直接入栈
 			if (icp > isp) {
 				push(&opeStack, ch);
 			}
 			else {
-				do {
+				do {	//先无条件执行一次运算操作，若后面运算符优先级还是小于等于前面，则再运算
 					push(&numStack, calculate(pop(&numStack), pop(&numStack), pop(&opeStack)));
-					if (ch == '#' && getTop(opeStack) == '#') {
-						result = pop(&numStack);
-						goto end;
+					if (ch == endSign && getTop(opeStack) == startSign) {
+						pop(&opeStack);	//清空运算符栈
+						return pop(&numStack);	//返回运算结果
 					}
-					if (ch == ')' && getTop(opeStack) == '(') {
-						pop(&opeStack);
-						ch = getchar();
-						icp = getIcp(ch);
-					}
-					isp = getIsp(getTop(opeStack));
+					isp = getIsp(getTop(opeStack));	//重新获取当前栈内运算符优先级
 				} while (icp < isp);
-				if (ch != ')')
-					push(&opeStack, ch);
 			}
 			ch = getchar();
-			if (ch != '(')
-				sign = 0;
+			sign = 0;
 		}
-		else {	//数字则无条件入栈
-			int num = 0;
-			int numSign = 1;
-			if (isOperator(ch) && !sign) {
-				if (ch == '+')
+		else {	//如果不是运算符，也不是开始、结束符
+			int num = 0;	//后面一坨的值
+			int numSign = 1;	//后面一坨运算符的符号，默认为正
+			while ((isOperator(ch) && !sign) || ch == '(') {
+				switch (ch) {
+				case '+':
 					numSign = 1;
-				else
+					break;
+				case '-':
 					numSign = -1;
+					break;
+				case '(':
+					num = process('#', '#', '#');
+					break;
+				}
 				ch = getchar();
 			}
-			while (!isOperator(ch)) {
-				num = num * 10 + (ch - 48);
+			while (!isOperator(ch) && ch != startSign && ch != endSign && ch != ')') {	//终于读到数字之后，获取数字的值
+				num = num * 10 + (ch - 48);	//目的是获取任意位数的数字（不超过int上限）
 				ch = getchar();
 			}
 			push(&numStack, num * numSign);
 			sign = 1;
 		}
 	}
-end:
-	printf("= %d", result);
+}
+
+//主函数
+int main() {
+	printf("Please input your infix expression\n");
+	printf("Your expressin must start and end with #\n");
+	
+	//之所以将处理缓冲区的功能封装起来，是因为需要递归调用
+	//传入空的头字符，以#作为开始和结束标志
+	printf("=%d", process(' ', '#', '#'));
 }
