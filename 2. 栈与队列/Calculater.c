@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef int status;		//用1表示成功，用0表示失败
 typedef int elemType;	//定义链栈所要储存的数据类型
 //链表的struct结构，供链式栈使用
 typedef struct linkedList {
@@ -19,12 +18,11 @@ stack* createNode(elemType data, stack* next) {
 	node->next = next;
 	return node;
 }
-//压栈，成功则返回1，否则返回0
-status push(stack** head, elemType data) {
+//压栈
+void push(stack** head, elemType data) {
 	*(head) = createNode(data, *(head));
-	return 1;
 }
-/*出栈，并返回弹出的值，若为空返回NULL
+/*出栈，并返回弹出的值，若为空返回-1
   务必传入stackA指针的地址*/
 elemType pop(stack** head) {
 	elemType data;
@@ -104,28 +102,23 @@ elemType calculate(elemType a, elemType b, char ch) {
 		return 0;
 	}
 }
-void DisplayList(stack* head) {
-	head = head->next;	//先将指针移动到头结点的下一个结点
-	while (head != NULL) {
-		printf("%d ", head->data);
-		head = head->next;
-	}
-	printf("\n");
-}
 //处理缓冲区中的字符
-//支持以除了运算符、小括号、数字以外的任意字符作为开始和结束符
+//ch是初始字符，startSign是开始标志，endSign是结束标志
 elemType process(char ch, char startSign, char endSign) {
+	//创建操作符和运算符栈
 	stack* numStack = NULL, * opeStack = NULL;
-
+	//如果没有传入初始ch值，则从缓存区读一个
 	if (ch == ' ')
-		ch = getchar();	//如果没有传入初始ch值，则从缓存区读一个
-	int sign = 1;	//默认将+ -理解为操作符
-
+		ch = getchar();	
+	//默认将+ -理解为操作符，1为操作符，0为正负号
+	int sign = 1;	
+	
 	while (1) {
-		if (ch == ')')	//一律将右括号处理为结束符
+		if (ch == ')')	//一律将右括号处理为结束符，以便实现递归
 			ch = endSign;
+		//此分支处理开始符、结束符、运算符
 		if ((isOperator(ch) && sign) || ch == startSign || ch == endSign) {
-			int icp = getIcp(ch);	//获取栈外运算符优先级
+			int icp = getIcp(ch);
 			//获取栈内运算符优先级，若为空则将isp设为-1
 			int isp = getTop(opeStack) == -1 ? -1 : getIsp(getTop(opeStack));
 
@@ -134,10 +127,12 @@ elemType process(char ch, char startSign, char endSign) {
 				push(&opeStack, ch);
 			}
 			else {
+				//先判断一次是否结束运算，用于应对开始符和结束符中间没有运算符的情况(#5#)
 				if (ch == endSign && getTop(opeStack) == startSign) {
 					pop(&opeStack);	//清空运算符栈
 					return pop(&numStack);	//返回运算结果
 				}
+				//一直运算，直到直到栈外运算符优先级大于站内运算符后，让运算符入栈
 				do {
 					push(&numStack, calculate(pop(&numStack), pop(&numStack), pop(&opeStack)));
 					if (ch == endSign && getTop(opeStack) == startSign) {
@@ -145,47 +140,59 @@ elemType process(char ch, char startSign, char endSign) {
 						return pop(&numStack);	//返回运算结果
 					}
 					isp = getIsp(getTop(opeStack));	//重新获取当前栈内运算符优先级
-				} while (icp < isp);	//一直运算，直到栈外运算符优先级大于栈内元素优先级
-				push(&opeStack, ch);	//直到栈外运算符优先级大于站内运算符后，才让入栈
+				} while (icp < isp);
+				//将操作符压入操作符栈
+				push(&opeStack, ch);
 			}
+			//从缓存区读入下一个字符
 			ch = getchar();
+			//接下来+ -会被认为是正负号
 			sign = 0;
 		}
-		else {	//如果是数字、+、-、小括号
-			int num = 0;	//后面一坨的值
-			int numSign = 1;	//后面一坨运算符的符号，默认为正
+		else {	//此分支用于处理数字、正负号
+			int num = 0;	//要入栈的数字
+			int numSign = 1;//要入栈的数字的符号
+			//此循环用于处理数字前面的修饰符号
 			while ((isOperator(ch) && !sign) || ch == '(') {
 				switch (ch) {
 				case '+':
-					numSign = 1;
-					break;
+					break;	//正号则不作处理
 				case '-':
-					numSign = -1;
+					numSign = -numSign;	//负号则取将numSign反号，以支持一连串的负号
 					break;
 				case '(':
-					num = process('#', '#', '#');
+					//若遇到左括号，则递归调用此函数，将括号内的值压入运算数栈
+					num = process(startSign, startSign, endSign);
+					//()括号结构后面的第一个+或-应被理解为加减号
 					sign = 1;
 					break;
 				}
+				//从缓存区读入下一个字符
 				ch = getchar();
 			}
-			while (!isOperator(ch) && ch != startSign && ch != endSign && ch != ')') {	//终于读到数字之后，获取数字的值
-				num = num * 10 + (ch - 48);	//目的是获取任意位数的数字（不超过int上限）
+			//此循环用于支持任意整型数字的输入（不大于int上限）
+			while (!isOperator(ch) && ch != startSign && ch != endSign && ch != ')') {
+				num = num * 10 + (ch - 48);
 				ch = getchar();
 			}
+			//最终综合修饰符号和数字两条路获得的结果，将最终结果入栈
 			push(&numStack, num * numSign);
+			//接下来的+ -会被认为是运算符
 			sign = 1;
 		}
 	}
 }
-
 //主函数
 int main() {
-	printf("Infix Calculater\n---------------\n");
-	printf("Your expressin must start and end with #.\n");
+	//支持以除了运算符、数字、小括号以外的任何字符作为开始和结束符
+	char startSign = '#';
+	char endSign = '#';
+
+	//人机交互信息
+	printf("Infix Calculater by TPam\n-------------------------\n");
+	printf("Your expressin must start with %c and end with %c.\n", startSign, endSign);
 	printf("Please input your infix expression:\n");
 	
-	//之所以将处理缓冲区的功能封装起来，是因为需要递归调用
-	//传入空的头字符，以#作为开始和结束标志
-	printf("The result is: %d\n", process(' ', '#', '#'));
+	//之所以要将运算函数封装起来，是因为需要递归调用此函数
+	printf("The result is: %d\n", process(' ', startSign, endSign));
 }
