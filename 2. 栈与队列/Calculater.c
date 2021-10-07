@@ -22,7 +22,7 @@ stack* createNode(elemType data, stack* next) {
 void push(stack** head, elemType data) {
 	*(head) = createNode(data, *(head));
 }
-/*出栈，并返回弹出的值，若为空返回-1
+/*出栈，并返回弹出的值，若下溢则直接退出
   务必传入stackA指针的地址*/
 elemType pop(stack** head) {
 	elemType data;
@@ -33,7 +33,9 @@ elemType pop(stack** head) {
 		free(p);
 		return data;
 	}
-	return -1;
+	//下溢证明算式输入错误，直接退出
+	printf("SYNTAX ERROR!");
+	exit(0);
 }
 //获取栈顶元素的值
 elemType getTop(stack* head) {
@@ -114,6 +116,8 @@ elemType process(char ch, char startSign, char endSign) {
 	int sign = 1;	
 	
 	while (1) {
+		if (ch == '\n')	//读到换行符则无条件结束程序，避免因为没有输入开始结束符导致的无限循环
+			exit(0);
 		if (ch == ')')	//一律将右括号处理为结束符，以便实现递归
 			ch = endSign;
 		//此分支处理开始符、结束符、运算符
