@@ -17,7 +17,7 @@ typedef struct crossList {
 }cList, list;
 //创建并返回一个十字链表的节点
 mNode* createNode(int row, int col, elemType data) {
-    mNode *node = (mNode*)malloc(sizeof(mNode));
+    mNode* node = (mNode*)malloc(sizeof(mNode));
     if (node == NULL)
         exit(0);
     node->row = row;
@@ -29,7 +29,7 @@ mNode* createNode(int row, int col, elemType data) {
 }
 //建立十字链表
 cList* createList(int row, int col) {
-    cList *h= (cList*)malloc(sizeof(cList));
+    cList* h = (cList*)malloc(sizeof(cList));
     if (h == NULL)
         exit(0);
     h->row = row;
@@ -70,15 +70,20 @@ void insertList(list* head, int row, int col, elemType data) {
     col--;
     //从列头节点去找插入位置的行
     mNode* prRow = &head->rHead[row], * pRow = prRow->right;
-    while (col >= prRow->col && pRow != &head->rHead[row]) {
+    while (col + 1 >= prRow->col && pRow != &head->rHead[row]) {
         prRow = pRow;
         pRow = pRow->right;
     }
     //从行头节点去找插入位置的列
     mNode* prCol = &head->cHead[col], * pCol = prCol->down;
-    while (row >= prCol->row && pCol!= &head->cHead[col]) {
+    while (row + 1 >= prCol->row && pCol != &head->cHead[col]) {
         prCol = pCol;
         pCol = pCol->down;
+    }
+    //检查是否重复
+    if (col + 1 == prRow->col && row + 1 == prCol->row) {
+        printf("error00002, at colomn=%d, row=%d, elem already exsist", col, row);
+        exit(0);
     }
     //处理结点间的链接
     prCol->down = node;
@@ -120,7 +125,7 @@ void transList(list* head) {
         p->right = down;
     }
     //最后修改总头节点
-    mNode *newRHead = head->cHead;
+    mNode* newRHead = head->cHead;
     head->cHead = head->rHead;
     head->rHead = newRHead;
 }
@@ -140,7 +145,7 @@ int main() {
     //避免非零元素个数大于矩阵规模
     nonZero = nonZero > row * col ? row * col : nonZero;
     //建立十字链表并写入数据
-    cList *list = createList(row, col);
+    cList* list = createList(row, col);
     for (int i = 0; i < nonZero && !feof(mSource); i++) {
         int row, col, data;
         fscanf(mSource, "%d %d %d\n", &row, &col, &data);
