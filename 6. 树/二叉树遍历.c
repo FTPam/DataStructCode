@@ -6,7 +6,7 @@
 typedef char elemType;
 //二叉树结构体
 typedef struct bitNode {
-	elemType data;						//结点数据值
+	elemType data;				//结点数据值
 	struct bitNode* LChild, * RChild;	//左右孩子
 }bitNode, * bitTree;
 //循环队列结构体
