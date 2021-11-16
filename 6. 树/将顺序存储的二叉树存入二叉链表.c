@@ -1,4 +1,5 @@
 //将顺序存储的二叉树存入二叉链表中存储
+//bt为源顺序存储的二叉树，num应传入1
 bitTree ConvertTree(sqBitTree bt, int num) {
 	if (bt.length < 0 || num < 1 || num > bt.length) {
 		return NULL;
