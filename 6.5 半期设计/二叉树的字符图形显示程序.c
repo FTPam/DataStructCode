@@ -5,9 +5,9 @@
 
 //二叉树储存char型数据
 typedef char elemType;
-//二叉树结构体
+//二叉链表结构体
 typedef struct bitNode {
-	elemType data;				//结点数据值
+	elemType data;	//结点数据值
 	struct bitNode* LChild, * RChild;	//左右孩子
 }bitNode, * bitTree;
 //循环队列结构体
@@ -33,8 +33,10 @@ queue createQueue() {
 }
 //向队列添加元素，成功则返回1，队满失败则返回0
 int insertElem(queue* a, bitNode* node) {
-	if (a->tag == 1)		//如果队满，则返回0
-		return 0;
+	if (a->tag == 1) {
+		printf("二叉树深度超出程序所能计算的上限");
+		exit(0);
+	}
 	*(a->base + a->rear) = node;
 	a->rear = (a->rear + 1) % MAX_SIZE;	//重新定位rear指针
 	a->tag = 0;					//此时已经回到一般情况或队满
@@ -243,11 +245,12 @@ void printTree(bitTree bt, int depth) {
 //主函数
 int main() {
 	//构造二叉树
-	printf("请输入要构造的二叉树\n");
-	printf("程序依次读入单个字符，遇到*则置空\n");
+	printf("请以先序序列输入要构造的二叉树\n");
+	printf("用#表示NULL指针域\n");
 	bitTree* tree = preOrderCreateTree();
 	//获取二叉树深度
 	int depth = getDepth(tree, 1);
 	//打印二叉树的字符图形
+	printf("该二叉树图形为:\n");
 	printTree(tree, depth);
 }
