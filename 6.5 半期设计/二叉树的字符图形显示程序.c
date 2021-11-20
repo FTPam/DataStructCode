@@ -8,6 +8,7 @@ typedef char elemType;
 //二叉链表结构体
 typedef struct bitNode {
 	elemType data;	//结点数据值
+	int order;	//存储该结点的编号
 	struct bitNode* LChild, * RChild;	//左右孩子
 }bitNode, * bitTree;
 //循环队列结构体
@@ -43,6 +44,12 @@ int insertElem(queue* a, bitNode* node) {
 	if (a->front == a->rear)	//判断是否队满
 		a->tag = 1;
 	return 1;		//插入成功，返回1
+}
+//获取队列最前端的元素地址
+bitNode* getTop(queue* a) {
+	if (a->tag == -1)
+		return NULL;	//队空返回空指针
+	return *(a->base + a->front);	//否则返回队列顶部元素
 }
 //从队列删除元素，并返回该元素的地址
 bitNode* deleteElem(queue* a) {
@@ -105,10 +112,14 @@ void printx(char data, int num) {
 		printf("%c", data);
 	}
 }
-//data为该层的元素数组，layer为层号
-void printLayer(elemType data[], int layer, int depth) {
-	//layerMax为当前层的元素个数
-	int layerMax = (int)(pow(2.0, layer - 1));
+//data为该层的元素数组，layer为层号, length为实际有效结点数量
+void printLayer(bitTree data[], int layer, int depth, int length) {
+	//在data末尾创建一个尾结点，用于避免数组越界
+	data[length] = createNode();
+	data[length]->order = -1;
+	int cp = 0; //data数组游标
+	//layerMax为当前层中最大编号
+	int layerStart= (int)(pow(2.0, layer - 1)), layerMax = (int)(pow(2.0, layer) - 1);
 	//firstBlank为第一个字符前面的空格数，gap为中间每个字符间的空格数
 	int firstBlank = pow(2.0, depth - layer + 1) - 2, gap = (int)(pow(2.0, depth - layer + 2)) - 1;
 	// ----------以下部分输出线条-----------
@@ -116,24 +127,31 @@ void printLayer(elemType data[], int layer, int depth) {
 	if (layer != 1) {
 		//此循环用于输出第一行线条，两个元素为一组
 		printx(' ', firstBlank);
-		for (int i = 0; i < layerMax; i = i + 2) {
+		for (int i = layerStart, cp = 0; i < layerMax; i = i + 2) {
 			//若data[i]不是空节点，则输出它头上的线
-			if (data[i]) {
+			if (i == data[cp]->order) {
 				printx('_', gap / 2 + 1);
+				cp++;
 			}
 			else {
 				printx(' ', gap / 2 + 1);
 			}
 			//若data[i]和data[i+1]不同时为空，则输出中间的竖线，否则输出空格占位
-			if (data[i] || data[i + 1]) {
+			if (cp == length) {
+				if (data[cp - 1]->order == i) {
+					printx('|', 1);
+				}
+			}
+			if (data[cp]->order == i || data[cp]->order == i + 1) {
 				printx('|', 1);
 			}
 			else {
 				printf(" ");
 			}
 			//若data[i+1]不是空节点，则输出它头上的横线
-			if (data[i + 1]) {
+			if (data[cp]->order == i + 1) {
 				printx('_', gap / 2 + 1);
+				cp++;
 			}
 			else {
 				printx(' ', gap / 2 + 1);
@@ -146,18 +164,20 @@ void printLayer(elemType data[], int layer, int depth) {
 		printf("\n");
 		//此循环用于输出第二行线条
 		printx(' ', firstBlank);
-		for (int i = 0; i < layerMax; i = i + 2) {
+		for (int i = layerStart, cp = 0; i < layerMax; i = i + 2) {
 			//若data[i]不是空节点，则输出它头上的竖线
-			if (data[i]) {
+			if (i == data[cp]->order) {
 				printf("|");
+				cp++;
 			}
 			else {
 				printf(" ");
 			}
 			printx(' ', gap);
 			//若data[i+1]不是空节点，则输出它头上的竖线
-			if (data[i + 1]) {
+			if (i + 1 == data[cp]->order) {
 				printf("|");
+				cp++;
 			}
 			else {
 				printf(" ");
@@ -175,9 +195,10 @@ void printLayer(elemType data[], int layer, int depth) {
 		printx(' ', firstBlank);
 	}
 	//输出该层所有元素
-	for (int i = 0; i < layerMax; i++) {
-		if (data[i]) {
-			printf("%c", data[i]);
+	for (int i = layerStart, cp = 0; i <= layerMax; i++) {
+		if (i == data[cp]->order) {
+			printf("%c", data[cp]->data);
+			cp++;
 		}
 		else {
 			printf(" ");
@@ -196,50 +217,40 @@ void printTree(bitTree bt, int depth) {
 	queue bitQueue = createQueue();
 	//layer为当前所在行
 	int layer = 1;
-	elemType data[MAX_SIZE];	//当前层的数据数组
-	int i = 0;	//辅助变量，将数据存入data数组
+	bitTree data[MAX_SIZE];	//当前层的元素数组
+	int length = 0; //当前行实际结点数量
+	bt->order = 1;	//初始化根节点，根节点的序号为1
 	insertElem(&bitQueue, bt);	//根节点入队
 
 	//将二叉树以完全二叉树存入队列
-	while (bitQueue.tag != -1 && layer <= depth) {
+	while (1) {
+		//判断该队列顶部结点是否已经超出当前行，或者已经到末端
+		if (!getTop(&bitQueue)) {
+			printLayer(data, layer, depth, length);
+			break;
+		}
+		if (getTop(&bitQueue)->order > (int)(pow(2.0, layer) - 1)) {
+			printLayer(data, layer, depth, length);
+			length = 0;
+			layer++;
+			continue;
+		}
 		//结点出队列
 		bitNode* node = deleteElem(&bitQueue);
-		bitNode* emptyNode = createNode();
-
-		data[i] = node->data;
-
-		//如果当前结点就是一个“空”结点，则直接再入队两个空节点
-		//其含义是假装这是一棵满二叉树，便于printLayer打印
-		if (!node->data) {
-			insertElem(&bitQueue, emptyNode);
-			insertElem(&bitQueue, emptyNode);
+		data[length] = node;
+		// 将左右孩子入队
+		// 并初始化左右孩子的序号
+		if (node->LChild) {
+			insertElem(&bitQueue, node->LChild);
+			node->LChild->order = 2 * node->order;
 		}
-		else {
-			// 将左右孩子入队
-			// 若无左右孩子，则在当前层数小于二叉树层数时入队空结点
-			// 如果当前已经到最后一层，那么久不要再补空节点了，否则就会无限进行下去
-			if (node->LChild) {
-				insertElem(&bitQueue, node->LChild);
-			}
-			else if (layer <= depth) {
-				insertElem(&bitQueue, emptyNode);
-			}
-
-			if (node->RChild) {
-				insertElem(&bitQueue, node->RChild);
-			}
-			else if (layer <= depth) {
-				insertElem(&bitQueue, emptyNode);
-			}
+		if (node->RChild) {
+			insertElem(&bitQueue, node->RChild);
+			node->RChild->order = 2 * node->order + 1;
 		}
-		//游标向后移动
-		i++;
+		//有效结点数+1
+		length++;
 		//判断当前行是否已经结束
-		if (i == (int)(pow(2.0, layer - 1))) {
-			printLayer(data, layer, depth);
-			i = 0;
-			layer++;
-		}
 	}
 }
 //主函数
