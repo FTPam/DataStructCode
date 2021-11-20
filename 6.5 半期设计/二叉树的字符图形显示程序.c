@@ -1,14 +1,15 @@
+//代码较长，主要原因是重新实现了循环队列，以及注释很多，核心代码大概在130行左右
 #pragma warning(disable:4996)
 #include <stdio.h>
 #include <math.h>
-#define MAX_SIZE 100
+#define MAX_SIZE 64
 
 //二叉树储存char型数据
 typedef char elemType;
 //二叉链表结构体
 typedef struct bitNode {
 	elemType data;	//结点数据值
-	int order;	//存储该结点的编号
+	int order;	//存储该结点在完全二叉树中的编号（只在逻辑上操作）
 	struct bitNode* LChild, * RChild;	//左右孩子
 }bitNode, * bitTree;
 //循环队列结构体
@@ -118,8 +119,8 @@ void printLayer(bitTree data[], int layer, int depth, int length) {
 	data[length] = createNode();
 	data[length]->order = -1;
 	int cp = 0; //data数组游标
-	//layerMax为当前层中最大编号
-	int layerStart= (int)(pow(2.0, layer - 1)), layerMax = (int)(pow(2.0, layer) - 1);
+	//layerStart为当前层的起始编号，layerMax为当前层中最大编号
+	int layerStart = (int)(pow(2.0, layer - 1)), layerMax = (int)(pow(2.0, layer) - 1);
 	//firstBlank为第一个字符前面的空格数，gap为中间每个字符间的空格数
 	int firstBlank = pow(2.0, depth - layer + 1) - 2, gap = (int)(pow(2.0, depth - layer + 2)) - 1;
 	// ----------以下部分输出线条-----------
@@ -128,27 +129,24 @@ void printLayer(bitTree data[], int layer, int depth, int length) {
 		//此循环用于输出第一行线条，两个元素为一组
 		printx(' ', firstBlank);
 		for (int i = layerStart, cp = 0; i < layerMax; i = i + 2) {
-			//若data[i]不是空节点，则输出它头上的线
+			//若当前位置有元素，则输出横线，否则输出空格占位
 			if (i == data[cp]->order) {
 				printx('_', gap / 2 + 1);
-				cp++;
 			}
 			else {
 				printx(' ', gap / 2 + 1);
 			}
-			//若data[i]和data[i+1]不同时为空，则输出中间的竖线，否则输出空格占位
-			if (cp == length) {
-				if (data[cp - 1]->order == i) {
-					printx('|', 1);
-				}
-			}
+			//若i和i+1不同时为空，则输出中间的竖线，否则输出空格占位
 			if (data[cp]->order == i || data[cp]->order == i + 1) {
 				printx('|', 1);
 			}
 			else {
 				printf(" ");
 			}
-			//若data[i+1]不是空节点，则输出它头上的横线
+			if (i == data[cp]->order) {
+				cp++;
+			}
+			//若当前位置有元素，则输出横线，否则输出空格占位
 			if (data[cp]->order == i + 1) {
 				printx('_', gap / 2 + 1);
 				cp++;
@@ -165,7 +163,7 @@ void printLayer(bitTree data[], int layer, int depth, int length) {
 		//此循环用于输出第二行线条
 		printx(' ', firstBlank);
 		for (int i = layerStart, cp = 0; i < layerMax; i = i + 2) {
-			//若data[i]不是空节点，则输出它头上的竖线
+			//若当前位置有元素，则输出它头顶的竖线，否则输出空格占位
 			if (i == data[cp]->order) {
 				printf("|");
 				cp++;
@@ -174,7 +172,7 @@ void printLayer(bitTree data[], int layer, int depth, int length) {
 				printf(" ");
 			}
 			printx(' ', gap);
-			//若data[i+1]不是空节点，则输出它头上的竖线
+			//若当前位置有元素，则输出它头顶的竖线，否则输出空格占位
 			if (i + 1 == data[cp]->order) {
 				printf("|");
 				cp++;
@@ -203,7 +201,9 @@ void printLayer(bitTree data[], int layer, int depth, int length) {
 		else {
 			printf(" ");
 		}
-		printx(' ', gap);
+		if (i != layerMax) {
+			printx(' ', gap);
+		}
 	}
 	printf("\n");
 }
