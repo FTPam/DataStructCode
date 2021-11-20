@@ -42,7 +42,7 @@ int insertElem(queue* a, bitNode* node) {
 		a->tag = 1;
 	return 1;		//插入成功，返回1
 }
-//从队列删除元素，返回该元素的地址
+//从队列删除元素，并返回该元素的地址
 bitNode* deleteElem(queue* a) {
 	bitNode* node;	//用于储存出队列的元素指针
 	if (a->tag == -1)
@@ -61,7 +61,7 @@ bitNode* createNode() {
 		printf("STACK OVERFLOW");
 		exit(0);
 	}
-	node->data = '*';
+	node->data = NULL;
 	node->LChild = NULL;
 	node->RChild = NULL;
 	return node;
@@ -72,8 +72,8 @@ bitNode* preOrderCreateTree() {
 	bitNode* node;
 	char ch;
 	ch = getchar();
-	//如果遇到字符*或\n，则表示无该节点
-	if (ch == '*' || ch == '\n') {
+	//如果遇到字符#，则表示无该节点
+	if (ch == '#') {
 		node = NULL;
 	}
 	else {
@@ -84,52 +84,6 @@ bitNode* preOrderCreateTree() {
 		node->RChild = preOrderCreateTree();
 	}
 	return node;
-}
-//先序遍历输出
-void preOrder(bitTree bt) {
-	if (bt == NULL) {
-		return 0;
-	}
-	printf("%c", bt->data);
-	preOrder(bt->LChild);
-	preOrder(bt->RChild);
-}
-//中序遍历输出
-void inOrder(bitTree bt) {
-	if (bt == NULL) {
-		return 0;
-	}
-	inOrder(bt->LChild);
-	printf("%c", bt->data);
-	inOrder(bt->RChild);
-}
-//后序遍历
-void postOrder(bitTree bt) {
-	if (bt == NULL) {
-		return 0;
-	}
-	postOrder(bt->LChild);
-	postOrder(bt->RChild);
-	printf("%c", bt->data);
-}
-//层序遍历
-void layerOrder(bitTree bt) {
-	//检验二叉树是否为空
-	if (bt == NULL)
-		return 0;
-	//建立队列用于辅助输出
-	queue bitQueue = createQueue();
-	insertElem(&bitQueue, bt);	//根节点入队
-	while (bitQueue.tag != -1) {
-		//先出队列，输出出队列的元素数据值
-		//若该元素有左右孩子，则从左至右依次入队
-		bitNode* node = deleteElem(&bitQueue);
-		printf("%c", node->data);
-		if (node->LChild)
-			insertElem(&bitQueue, node->LChild);
-		if (node->RChild)
-			insertElem(&bitQueue, node->RChild);
-	}
 }
 //求二叉树中以元素值为x的结点为根的子树的深度
 //bt为要查找的二叉树，depth应传入1
@@ -143,35 +97,96 @@ int getDepth(bitTree bt, int depth) {
 	RDepth = getDepth(bt->RChild, depth + 1);
 	return LDepth >= RDepth ? LDepth : RDepth;
 }
-//输出
-//data为该层的元素数组，layer为层号
-void printTree(elemType data[], int layer, int depth) {
-	int i = 0;	//当前位置
-	//cLayer即current layer，当前层
-	for (int cLayer = 1; cLayer < depth; cLayer++) {
-		//layerMax为当前层的最大值
-		int layerMax = (int)(pow(2.0, layer - 1));
-		//输出第一个字符前面的空格
-		if (layer != depth) {
-			for (int j = 0; j < pow(2.0, depth - layer + 1) - 2; j++) {
-				printf(" ");
-			}
-		}
-		//输出元素间的空格
-		while (i != layerMax) {
-			printf("%c ", data[i]);
-			for (int j = 0; j < (int)(pow(2.0, depth - layer + 2) - 2); j++) {
-				printf(" ");
-			}
-			i++;
-		}
-		//输出线条
-		printf("\n");
+//连续输出num次字符
+void printx(char data, int num) {
+	for (int i = 0; i < num; i++) {
+		printf("%c", data);
 	}
 }
+//data为该层的元素数组，layer为层号
+void printLayer(elemType data[], int layer, int depth) {
+	//layerMax为当前层的元素个数
+	int layerMax = (int)(pow(2.0, layer - 1));
+	//firstBlank为第一个字符前面的空格数，gap为中间每个字符间的空格数
+	int firstBlank = pow(2.0, depth - layer + 1) - 2, gap = (int)(pow(2.0, depth - layer + 2)) - 1;
+	// ----------以下部分输出线条-----------
+	// 如果是第一层（根节点），则不输出头顶上的线条
+	if (layer != 1) {
+		//此循环用于输出第一行线条，两个元素为一组
+		printx(' ', firstBlank);
+		for (int i = 0; i < layerMax; i = i + 2) {
+			//若data[i]不是空节点，则输出它头上的线
+			if (data[i]) {
+				printx('_', gap / 2 + 1);
+			}
+			else {
+				printx(' ', gap / 2 + 1);
+			}
+			//若data[i]和data[i+1]不同时为空，则输出中间的竖线，否则输出空格占位
+			if (data[i] || data[i + 1]) {
+				printx('|', 1);
+			}
+			else {
+				printf(" ");
+			}
+			//若data[i+1]不是空节点，则输出它头上的横线
+			if (data[i + 1]) {
+				printx('_', gap / 2 + 1);
+			}
+			else {
+				printx(' ', gap / 2 + 1);
+			}
+			//若后面还有元素，则输出空格
+			if (i + 2 < layerMax) {
+				printx(' ', gap);
+			}
+		}
+		printf("\n");
+		//此循环用于输出第二行线条
+		printx(' ', firstBlank);
+		for (int i = 0; i < layerMax; i = i + 2) {
+			//若data[i]不是空节点，则输出它头上的竖线
+			if (data[i]) {
+				printf("|");
+			}
+			else {
+				printf(" ");
+			}
+			printx(' ', gap);
+			//若data[i+1]不是空节点，则输出它头上的竖线
+			if (data[i + 1]) {
+				printf("|");
+			}
+			else {
+				printf(" ");
+			}
+			if (i + 2 < layerMax) {
+				printx(' ', gap);
+			}
+		}
+		printf("\n");
+	}
 
-//层序遍历获取每一层结点的信息
-void getLayerInfo(bitTree bt, int depth) {
+	//---------以下部分输出字符------------
+	//输出第一个字符前面的空格
+	if (layer != depth) {
+		printx(' ', firstBlank);
+	}
+	//输出该层所有元素
+	for (int i = 0; i < layerMax; i++) {
+		if (data[i]) {
+			printf("%c", data[i]);
+		}
+		else {
+			printf(" ");
+		}
+		printx(' ', gap);
+	}
+	printf("\n");
+}
+
+//层序遍历获取每一层的信息，并传给printLayer进行打印
+void printTree(bitTree bt, int depth) {
 	//检验二叉树是否为空
 	if (bt == NULL)
 		return 0;
@@ -192,13 +207,15 @@ void getLayerInfo(bitTree bt, int depth) {
 		data[i] = node->data;
 
 		//如果当前结点就是一个“空”结点，则直接再入队两个空节点
+		//其含义是假装这是一棵满二叉树，便于printLayer打印
 		if (!node->data) {
 			insertElem(&bitQueue, emptyNode);
 			insertElem(&bitQueue, emptyNode);
 		}
 		else {
-
-			//将左右孩子入队，若无左右孩子，则在当前层数小于二叉树层数时入队空结点
+			// 将左右孩子入队
+			// 若无左右孩子，则在当前层数小于二叉树层数时入队空结点
+			// 如果当前已经到最后一层，那么久不要再补空节点了，否则就会无限进行下去
 			if (node->LChild) {
 				insertElem(&bitQueue, node->LChild);
 			}
@@ -217,7 +234,7 @@ void getLayerInfo(bitTree bt, int depth) {
 		i++;
 		//判断当前行是否已经结束
 		if (i == (int)(pow(2.0, layer - 1))) {
-			printTree(data, layer, depth);
+			printLayer(data, layer, depth);
 			i = 0;
 			layer++;
 		}
@@ -225,15 +242,12 @@ void getLayerInfo(bitTree bt, int depth) {
 }
 //主函数
 int main() {
-	//将二叉树补为完全二叉树后的数据信息存入数组中
-	elemType layer[MAX_SIZE];
-
 	//构造二叉树
 	printf("请输入要构造的二叉树\n");
 	printf("程序依次读入单个字符，遇到*则置空\n");
 	bitTree* tree = preOrderCreateTree();
-
+	//获取二叉树深度
 	int depth = getDepth(tree, 1);
-	printf("%d\n", depth);
-	getLayerInfo(tree, depth);
+	//打印二叉树的字符图形
+	printTree(tree, depth);
 }
