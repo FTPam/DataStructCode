@@ -2,7 +2,7 @@
 #pragma warning(disable:4996)
 #include <stdio.h>
 #include <math.h>
-#define MAX_SIZE 64
+#define MAX_SIZE 100
 
 //二叉树储存char型数据
 typedef char elemType;
@@ -207,7 +207,6 @@ void printLayer(bitTree data[], int layer, int depth, int length) {
 	}
 	printf("\n");
 }
-
 //层序遍历获取每一层的信息，并传给printLayer进行打印
 void printTree(bitTree bt, int depth) {
 	//检验二叉树是否为空
