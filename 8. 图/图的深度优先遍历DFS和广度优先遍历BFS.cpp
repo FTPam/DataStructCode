@@ -23,6 +23,20 @@ typedef struct Graph {
 	AdjList vex;	//顶点表
 	int vexNum, arcNum;	//顶点数量、边数量
 }Graph;
+// 在完成一次遍历后，检查是否有未连通的结点并输出
+void checkSolo(Graph& g) {
+	cout << "未连通结点为: ";
+	bool tag = false;
+	for (int i = 0; i < g.vexNum; i++) {
+		if (!g.vex[i].isTed) {
+			cout << g.vex[i].data << ' ';
+			tag = true;
+		}
+	}
+	if (!tag) {
+		cout << "无";
+	}
+}
 // 给图添加边
 // g为要添加的图，vex为顶点在顶点表中的下标
 // des为相邻顶点在顶点表中的下标
@@ -43,7 +57,7 @@ void addEdge(Graph& g, int vex, int des) {
 		p->nextArc = node;
 	}
 }
-// 深度优先遍历
+// 深度优先遍历，仅遍历连通结点
 // g为要遍历的图，v为顶点序号
 // 调用时，v一般应该传入0
 void dfs(Graph& g, int v) {
@@ -52,7 +66,7 @@ void dfs(Graph& g, int v) {
 		return;
 	}
 	//输出当前结点
-	cout << g.vex[v].data;
+	cout << g.vex[v].data << ' ';
 	g.vex[v].isTed = true;
 	//递归深入
 	ArcNode* p = g.vex[v].firstArc;
@@ -63,7 +77,7 @@ void dfs(Graph& g, int v) {
 		p = p->nextArc;
 	}
 }
-// 广度优先遍历
+// 广度优先遍历，仅遍历连通结点
 // g为要遍历的图
 void bfs(Graph& g) {
 	//如果没有结点，直接返回
@@ -76,7 +90,7 @@ void bfs(Graph& g) {
 	g.vex[0].isTed = true;
 	while (!q.empty()) {
 		//输出当前结点并标记为已访问过
-		cout << g.vex[q.front()].data;
+		cout << g.vex[q.front()].data << ' ';
 		//将与该节点相邻的所有结点入队列
 		ArcNode* p = g.vex[q.front()].firstArc;
 		while (p != NULL) {
@@ -127,10 +141,13 @@ int main() {
 			}
 		}
 	}
-	cout << "数据读入完毕..." << endl;
+	cout << "数据读入完毕..." << endl << endl;
 	cout << "深度优先遍历结果: ";
 	dfs(g, 0);
+	checkSolo(g);
 	initalG(g);
 	cout << endl << "广度优先遍历结果: ";
 	bfs(g);
+	checkSolo(g);
+	cout << endl;
 }
