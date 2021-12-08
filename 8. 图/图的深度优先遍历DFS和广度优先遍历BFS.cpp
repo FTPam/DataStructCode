@@ -5,6 +5,7 @@
 using namespace std;
 
 #define MAX_VERTEX_NUM 26
+
 // 邻接表结构体
 typedef char elemType;	//图所储存的数据类型
 // 邻接表结点
@@ -19,7 +20,7 @@ typedef struct VNode {
 	ArcNode* firstArc;
 }VNode, AdjList[MAX_VERTEX_NUM];
 // 图结构体
-typedef struct Graph { 
+typedef struct Graph {
 	AdjList vex;	//顶点表
 	int vexNum, arcNum;	//顶点数量、边数量
 }Graph;
@@ -51,7 +52,7 @@ void addEdge(Graph& g, int vex, int des) {
 	}
 	else {
 		// 移动到最后一个结点
-		while (p->nextArc!=NULL) {
+		while (p->nextArc != NULL) {
 			p = p->nextArc;
 		}
 		p->nextArc = node;
@@ -89,7 +90,7 @@ void bfs(Graph& g) {
 	q.push(0);
 	g.vex[0].isTed = true;
 	while (!q.empty()) {
-		//输出当前结点并标记为已访问过
+		//输出当前结点
 		cout << g.vex[q.front()].data << ' ';
 		//将与该节点相邻的所有结点入队列
 		ArcNode* p = g.vex[q.front()].firstArc;
@@ -116,7 +117,7 @@ int main() {
 	cout << "正在从" << fileName << "读入数据..." << endl;
 	ifstream  file;
 	file.open(fileName, ios::in);
-	
+
 	Graph g;
 	int vNum;
 	// 读入结点
@@ -126,6 +127,7 @@ int main() {
 		g.vex[vNum].firstArc = NULL;
 	}
 	g.vexNum = vNum;
+	g.arcNum = 0;
 	// 读入边
 	file.ignore(1);	//清除掉上一行的换行符
 	for (int i = 0; !file.eof() && i < g.vexNum; i++) {
@@ -138,6 +140,7 @@ int main() {
 				int adj;
 				file >> adj;
 				addEdge(g, i, adj);
+				g.arcNum++;
 			}
 		}
 	}
@@ -151,3 +154,4 @@ int main() {
 	checkSolo(g);
 	cout << endl;
 }
+
