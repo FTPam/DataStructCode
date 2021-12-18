@@ -82,7 +82,7 @@ int readData(test* a) {
 	scanf("%d", &a->subNum);
 	printf("请依次输入科目名称: ");
 	for (int i = 0; i < a->subNum; i++) {
-		printf("科目%d: ", i);
+		printf("科目%d: ", i + 1);
 		scanf("%s", &a->subName[i]);
 		getchar();	// 去掉换行符
 	}
@@ -277,6 +277,10 @@ int main() {
 				break;
 			}
 			fprintf(file, "student num: %d, subject num: %d;\n", a.stuNum, a.subNum);
+			for (int i = 0; i < a.subNum; i++) {
+				fprintf(file, "%s ", a.subName[i]);
+			}
+			fprintf(file, "\n");
 			for (int i = 0; i < a.stuNum; i++) {
 				fprintf(file, "%s %s", a.stu[i].id, a.stu[i].name);
 				for (int j = 0; j < a.subNum; j++) {
