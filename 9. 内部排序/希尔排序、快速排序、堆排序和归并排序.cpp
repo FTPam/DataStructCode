@@ -1,4 +1,5 @@
 #include <iostream>
+#include <math.h>
 using namespace std;
 
 #define ARRAY_LENGTH 20+1
@@ -9,9 +10,10 @@ typedef struct {
 }sortArr;
 // 希尔排序
 void shellSort(sortArr& s) {
-	for (int d = s.length / 2; d >= 1; d /= 2) {	// 计算获得每一趟的增量，此算法最后一个d必为1
+	for (int k = log2(s.length + 1); k >= 1; k--) {	// d为增量，采用Hibbard增量序列
+		int d = pow(2, k) - 1;
 		for (int i = 1 + d; i <= s.length; i++) {	// 将此增量依次应用于每个元素
-			int *a = &s.arr[0];
+			int* a = &s.arr[0];
 			if (a[i] < a[i - d]) {	// 若当前元素小于上一个元素，则需要将该元素插入到前面的序列中
 				int j;
 				a[0] = a[i];	// 将要插入的值记录到0号位
@@ -113,6 +115,7 @@ void mergeSort(sortArr& a) {
 		int* sort = s.arr;	// 临时存放归并数组
 		for (int k = 1, m = 1 + d; m <= a.length; k = m + d, m = k + d) {
 			int i, j;
+			// 开始归并
 			for (i = 0, j = 0; i < d && j < d && m + j <= a.length;) {
 				if (a.arr[k + i] <= a.arr[m + j]) {
 					sort[k + i + j] = a.arr[k + i];
@@ -123,6 +126,7 @@ void mergeSort(sortArr& a) {
 					j++;
 				}
 			}
+			// 合并剩余部分
 			while (i < d) {
 				sort[k + i++ + j] = a.arr[k + i];
 			}
