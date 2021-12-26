@@ -133,8 +133,8 @@ void mergeSort(sortArr& a) {
 			while (j < d && m + j <= a.length) {
 				sort[k + i + j++] = a.arr[m + j];
 			}
-			a = s;
 		}
+		a = s;
 	}
 }
 // 输出数组中的每一个元素到屏幕上
